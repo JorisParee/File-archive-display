@@ -1,0 +1,369 @@
+<!DOCTYPE html>
+<HTML>
+
+<table style='width:100%'>
+	<tr style='padding-top: 3em;'>
+		<td style='width:10em; vertical-align: top; '>
+			<div id='settings'>
+				<h2>Opties</h3><br>
+				<div>
+					<input type='radio' name='listtype' id='radio_normal' value='normal' onclick='update_view()' checked>
+					<label for='normal'>Één lange lijst</label><br>
+					<input type='radio' name='listtype' id='radio_collapsible' value='collapable' onclick='update_view()'>
+					<label for='collapsable'>Inklapbaare lijst</label>
+				</div>
+				<div>
+					<p class='selectietext' ><bold>onderdeelen:</bold></p>
+					<div id='onderdelen_div'>
+			
+					</div>
+					<p class='selectietext' ><bold>catogory:</bold></p>
+					<div id='catogory_div'>
+					
+					<div>
+				</div>
+			</div>
+		</td>
+		<td style='width:fill; vertical-align: top; padding-top: 2em;'>
+			<div id='archief' style='width:fill'></div>
+		</td>
+	</tr>
+</table>
+
+
+<div id='test'></div>
+
+
+</HTML>
+
+
+<style>
+	.collapsible {
+		cursor: pointer;
+		background-color: #363;
+		color: white;
+		padding: 2px;
+		padding-left: 10;
+		width: 100%;
+		border: none;
+		text-align: left
+	}
+	.collapsible:before {
+		content: '\02C3';
+	}
+	.active:before {
+		content: '\02C5';
+	}
+
+	.active,
+	.collapsible:hover {
+		background-color: #272;
+	}
+
+
+	.content {
+		display: none;
+		padding-left: 10px;
+		background-color: #999;
+		overflow: hidden;
+	}
+
+
+
+	th,td {/* table header */
+		padding-right: 2em;
+		text-align: left;
+	}
+
+	th {
+		border-right: 2px;
+		border-right-style: inset;
+	}
+	
+	.selectietext {
+		margin-bottom:4px
+	}
+</style>
+
+
+<script>
+
+
+	var doc_list = [
+		{ Datum: '2020-01-02', Onderdeel: "groep", 		Catogory: "notulen",BestandsType: "pdf", Naam: "probeer verslag 1", Link: "www.leiding.christoforus.nl" },
+		{ Datum: '2019-01-01', Onderdeel: "groep", 		Catogory: "notulen",BestandsType: "pdf", Naam: "probeer verslag 2", Link: "www.leiding.christoforus.nl" },
+		{ Datum: '2018-02-01', Onderdeel: "stichting", 	Catogory: "notulen",BestandsType: "pdf", Naam: "probeer verslag 2", Link: "www.leiding.christoforus.nl" },
+		{ Datum: '2020-02-04', Onderdeel: "groep", 		Catogory: "notulen",BestandsType: "pdf", Naam: "probeer verslag 2", Link: "www.leiding.christoforus.nl" },
+		//[yyyy-mm-dd,	"groep/stichting",	"bestand type",	"naam",					"bestand link" ]
+	]
+	var doc_headers = ['Datum', 'Onderdeel', 'Catogory', 'BestandsType', 'Naam', 'Download']
+
+	var updated_list = []
+
+initialiseSettings()
+	function initialiseSettings(){
+		set_topics_checkbox()
+		sort_list_date()
+		update_view()
+	}
+
+	function update_view(){
+		update_list()
+		show_list()
+	}
+
+	function show_list(){
+		nodeArchief = document.getElementById('archief')
+		if(document.getElementById('radio_normal').checked){
+			nodeList = create_list_normal(updated_list, 'Datum', doc_headers, 'Link')
+		}
+		if(document.getElementById('radio_collapsible').checked){
+			nodeList = create_list_collapsible(updated_list, 'Datum', doc_headers, 'Link')
+		}
+		nodeArchief.innerHTML = ''
+		nodeArchief.appendChild(nodeList)
+
+	}
+
+	//sort list on datum ascending
+
+	function sort_list_date() {
+		doc_list.sort(function (a, b) {
+			return new Date(b.Datum) - new Date(a.Datum);
+		})
+	}
+
+	function create_list_normal(list, datecolumn, headers, linkColumn) {
+		var returnDIV = document.createElement("DIV")
+
+		var nodeTable = document.createElement("TABLE")
+
+		//create table headers
+		var nodeTR = document.createElement("TR")
+		for (var j in headers){
+			var nodeTH = document.createElement("TH")
+			nodeTH.innerHTML = headers[j]
+			nodeTR.appendChild(nodeTH)
+		}
+		nodeTable.appendChild(nodeTR)
+
+
+		//add all table rows
+		for (var i in list){
+			var nodeTR = create_row(list[i], linkColumn);
+			nodeTable.appendChild(nodeTR);
+		}
+		returnDIV.appendChild(nodeTable)
+
+		return returnDIV
+	}
+
+	function create_list_collapsible(list, datecolumn, headers, linkColumn) {
+
+
+		var month = new Array();
+		month[0] = "January";
+		month[1] = "February";
+		month[2] = "March";
+		month[3] = "April";
+		month[4] = "May";
+		month[5] = "June";
+		month[6] = "July";
+		month[7] = "August";
+		month[8] = "September";
+		month[9] = "October";
+		month[10] = "November";
+		month[11] = "December";
+
+		var y = "";
+		var m = "";
+		var current_year_div
+		var current_month_table
+
+		var returnDIV = document.createElement("DIV")
+
+		for (var i in list) {
+
+			//create year collapsable if new year
+			if ((new Date(list[i][datecolumn])).getFullYear() != y) {
+				//create new collapsable and add it to list
+				var nodeBTN = document.createElement("BUTTON")
+				nodeBTN.type = "button";
+				nodeBTN.className = "collapsible";
+				nodeBTN.innerHTML = new Date(list[i][datecolumn]).getFullYear()
+				returnDIV.appendChild(nodeBTN)
+
+				var nodeDIV = document.createElement("DIV")
+				nodeDIV.className = "content"
+				returnDIV.appendChild(nodeDIV)
+				current_year_div = nodeDIV
+
+
+			}
+
+			//crate month collapsable if new month
+			if ((new Date(list[i][datecolumn])).getMonth() != m || (new Date(list[i][datecolumn])).getFullYear() != y) {
+				//create new collapsable and add it to list
+				var nodeBTN = document.createElement("BUTTON")
+				nodeBTN.type = "button";
+				nodeBTN.className = "collapsible";
+				nodeBTN.innerHTML = month[new Date(list[i][datecolumn]).getMonth()]
+				current_year_div.appendChild(nodeBTN)
+
+				var nodeDIV = document.createElement("DIV")
+				nodeDIV.className = "content"
+				current_year_div.appendChild(nodeDIV)
+
+				//also add the table with headers
+				var nodeTable = document.createElement("TABLE")
+				var nodeTR = document.createElement("TR")
+				nodeTable.appendChild(nodeTR)
+				for (var j in headers){
+					var nodeTH = document.createElement("TH")
+					nodeTH.innerHTML = headers[j]
+					nodeTR.appendChild(nodeTH)
+				}
+				nodeDIV.appendChild(nodeTable)
+
+				current_month_table = nodeTable
+
+			}
+
+			var y = (new Date(list[i][datecolumn])).getFullYear();
+			var m = (new Date(list[i][datecolumn])).getMonth();
+
+
+			//add the items to last collapsable div since that is where it is at
+
+			var nodeTR = create_row(list[i], linkColumn);
+			current_month_table.appendChild(nodeTR)
+
+		}
+
+		//makes the collapsible parts work
+		var coll = returnDIV.getElementsByClassName("collapsible");
+		for (var i = 0; i < coll.length; i++) {
+			coll[i].addEventListener("click", function () {
+				this.classList.toggle("active");
+				var content = this.nextElementSibling;
+				if (content.style.display === "block") {
+					content.style.display = "none";
+					//if it has children should also close
+					var contentChildren = content.getElementsByClassName("collapsible");
+					for (var j = 0; j<contentChildren.length; j++){
+						var contentChild = contentChildren[j];
+						if (contentChild.classList.contains('active')){
+							contentChild.click()
+						}
+					}
+				} else {
+					content.style.display = "block";
+				}
+			});
+		}
+		
+		return returnDIV
+
+	}
+	
+	function create_row(row, linkColumn){
+		var nodeTR = document.createElement("TR")
+		for (var j in row){
+			var nodeTD = document.createElement("TD")
+			nodeTD.innerHTML = row[j]
+			if (j == linkColumn){
+				var nodeA = document.createElement("A")
+				nodeA.href = row[j]
+				nodeA.innerHTML = 'hier'
+				nodeTD.innerHTML=""
+				nodeTD.appendChild(nodeA)
+			}
+			nodeTR.appendChild(nodeTD)
+		}
+		return nodeTR
+	}
+
+
+
+	function get_difference_in_column(list, column){
+		var differenceList = []
+		for(var i in list){
+			if(differenceList.indexOf(list[i][column]) ==  -1 ){
+				//if not in differencelist, add
+				differenceList.push(list[i][column])
+			}
+		}
+		//sort alphabetically
+		differenceList.sort()
+
+		return differenceList
+	}
+
+	function set_topics_checkbox(){
+	
+	//first for onderdeel
+		topicList = get_difference_in_column(doc_list, 'Onderdeel')
+		var nodeOnderdelenDiv = document.getElementById('onderdelen_div')
+
+		for (var i in topicList){
+			var topic = topicList[i]
+			var nodeCheckboxDiv = create_checkbox(topic, true );
+			nodeOnderdelenDiv.appendChild(nodeCheckboxDiv)
+		}
+		
+		//then for catogory
+		topicList = get_difference_in_column(doc_list, 'Catogory')
+		var nodeOnderdelenDiv = document.getElementById('catogory_div')
+
+		for (var i in topicList){
+			var topic = topicList[i]
+			var nodeCheckboxDiv = create_checkbox(topic, true );
+			nodeOnderdelenDiv.appendChild(nodeCheckboxDiv)
+		}
+	}
+	
+	function create_checkbox(labelName, checked){
+		var nodeDIV = document.createElement("DIV")
+		
+		var nodeCheckbox = document.createElement("INPUT")
+		nodeCheckbox.type = 'checkbox'
+		nodeCheckbox.id = "checkbox" + labelName
+		nodeCheckbox.checked = checked
+		nodeCheckbox.onclick = function() {update_view()}
+		
+		var nodeLabel = document.createElement("LABEL")
+		nodeLabel.for = "checkbox" + labelName
+		nodeLabel.innerHTML = labelName
+		nodeBR = document.createElement("BR")
+		
+		nodeDIV.appendChild(nodeCheckbox)
+		nodeDIV.appendChild(nodeLabel)
+		
+		return nodeDIV
+	}
+
+	function update_list() {
+		updated_list = []
+		for(var i in doc_list){
+			if(document.getElementById("checkbox" + doc_list[i].Onderdeel).checked && document.getElementById("checkbox" + doc_list[i].Catogory).checked){
+				updated_list.push(doc_list[i])
+			}
+		}
+	}
+
+
+	//script to get value from the checked radio button
+	function getRadioValueCheked(name){
+		var buttonsSet = document.getElementsByName(name); 
+              
+		for(i = 0; i < buttonsSet.length; i++) { 
+			if(buttonsSet[i].checked) {
+				return buttonSet[i].value
+			}
+			
+		} 
+	}
+
+
+
+</script>
